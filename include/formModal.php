@@ -15,7 +15,7 @@ if($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['surveySubmitBtn'])){
     $expiryDate = $_POST['sExpiryDate'];
 
     $query = "insert into surveys(SurveyName , SurveyDesc, OwnedBy, ExpiryDate) 
-                select '".$sName."','".$sType."',ID,".$expiryDate." from users where Email= '".$user."'";
+                select '".$sName."','".$sType."',ID,'".$expiryDate."' from users where Email= '".$user."'";
 
     require_once dirname(__FILE__)."\DbConnect.php";
     $db = new DbConnect();

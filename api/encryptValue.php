@@ -20,7 +20,7 @@ $conn = $db->connect();
 // random generate based on selected bit
 $g = new Math_BigInteger(generate1024bit());
 $p = new Math_BigInteger(generate1024bit());
-$c = new Math_BigInteger(generate80bit());
+$c = new Math_BigInteger(generate160bit());
 $d = new Math_BigInteger(1);
 $key = generateKey($g,$p,$c);
 

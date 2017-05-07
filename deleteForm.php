@@ -8,13 +8,15 @@
 session_start();
 
 $id = $_GET['id'];
-$query = "delete from Surveys where ID = '$id'";
+$query = "delete from Surveys where ID = ".$id;
 include dirname(__FILE__) . "/include/DbConnect.php";
 $db = new DbConnect();
 $conn = $db->connect();
 
 echo "Deleting...";
-mysqli_query($conn, $query);
+if(!mysqli_query($conn, $query)){
+    echo mysqli_error($conn);
+}
 mysqli_close($conn);
 
 header("Location: index.php");

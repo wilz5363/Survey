@@ -16,45 +16,49 @@ $answerId = $_POST['answerId'];
 $cipherText = new Math_BigInteger($_POST['cipherText']);
 $curKey = new Math_BigInteger($_POST['key']);
 
+$email = $_POST['email'];
+$questionId = $_POST['questionId'];
+$lastQuestion = $_POST['lastQuestion'];
+
+$sqlGetUserId = "select ID from users where Email = '".$email."'";
+$userId = mysqli_query($conn, $sqlGetUserId);
+$userId = mysqli_fetch_assoc($userId);
 
 
-$sqlGetAnswerSelectionCount = "select SelectionCount from answers where ID =".$answerId;
-$selectionCountResult = mysqli_query($conn, $sqlGetAnswerSelectionCount);
-$selectionCountResult = mysqli_fetch_assoc($selectionCountResult);
+
+$sqlGetAnotherAnswerHash = "select AnswerId,Answer_Hash from crypto_table where AnswerId = (select ID from answers where ID != ".$answerId." and questionId = (select QuestionId from answers where ID =".$answerId."))";
+$anotherAnswer = mysqli_query($conn, $sqlGetAnotherAnswerHash);
+$anotherAnswer = mysqli_fetch_assoc($anotherAnswer);
+$anotherAnswerHash = new Math_BigInteger($anotherAnswer['Answer_Hash']);
+
+$noCountPlainText = new Math_BigInteger(0);
+$noCountG = new Math_BigInteger(generate1024bit());
+$noCountP = new Math_BigInteger(generate1024bit());
+$noCountC = new Math_BigInteger(generate80bit());
+$noCountKey = generateKey($noCountG, $noCountP, $noCountC);
+
+$noCountCipherText = new Math_BigInteger(encryption($noCountPlainText,$noCountKey, $anotherAnswerHash ));
 
 
+if($anotherAnswer['AnswerId'] > $answerId){
+    //A is selected
+    $sqlInsertAggregateData  = "insert into aggregate_table (UserId, QuestionId, FirstSelection, FirstKey, SecondSelection, SecondKey) ".
+                                    "values (".$userId['ID'].",".$questionId.",'".$cipherText."','".$curKey."','".$noCountCipherText."','".$noCountKey."')";
 
-if($selectionCountResult['SelectionCount'] == null){
-
-    $newSelectionCount = $cipherText;
-    $newKey = $curKey;
-
+}else{
+    //B is selected
+    $sqlInsertAggregateData  = "insert into aggregate_table (UserId, QuestionId, FirstSelection, FirstKey, SecondSelection, SecondKey) ".
+                                    "values (".$userId['ID'].",".$questionId.",'".$noCountCipherText."','".$noCountKey."','".$cipherText."','".$curKey."')";
 }
-else{
 
-    //get data from crypto_table
-    $sqlGetCryptoData = "select Answer_Hash, Answer_Key from crypto_table where AnswerId = ".$answerId;
-    $cryptoData = mysqli_query($conn, $sqlGetCryptoData);
-    $cryptoData = mysqli_fetch_assoc($cryptoData);
-
-    //get the latest selection count
-    $oldSelectionCount = new Math_BigInteger($selectionCountResult['SelectionCount']);
-    $answerHash = new Math_BigInteger($cryptoData['Answer_Hash']);
-    $newSelectionCount = CalculateNewSelectionCount($oldSelectionCount, $cipherText, $answerHash);
-
-    //get the lastest key
-    $oldKey = new Math_BigInteger($cryptoData['Answer_Key']);
-    $newKey = CalculateNewKey($oldKey, $curKey);
-
-}
-
-$sqlUpdateData = "Update answers set SelectionCount = '".$newSelectionCount->value."' where ID = ".$answerId.";";
-$sqlUpdateData .= "update crypto_table set Answer_Key = '".$newKey->value."' where AnswerId = ".$answerId;
-
-if(mysqli_multi_query($conn,$sqlUpdateData)){
+if (mysqli_query($conn, $sqlInsertAggregateData)){
     echo "Answer Accepted";
 }else{
     echo "Error: ".mysqli_error($conn);
 }
 
+if($lastQuestion){
+    $sqlUpdateUserSession = "update user_sessions set Completed = TRUE ";
+    mysqli_query($conn, $sqlUpdateUserSession);
+}
 

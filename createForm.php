@@ -104,7 +104,7 @@ WHERE questions.SurveyId = '$sID'";
                     mysqli_error($conn);
                 }else{
                     $ansId = mysqli_insert_id($conn);
-                    $hash = new Math_BigInteger(generate1024bit());
+                    $hash = new Math_BigInteger(generate1024bithash());
                     $qInsertCryptoTable = "insert into crypto_table(AnswerId, Answer_Hash) VALUE (".$ansId.",'".$hash."')";
                     mysqli_query($conn, $qInsertCryptoTable);
                 }
@@ -117,7 +117,7 @@ WHERE questions.SurveyId = '$sID'";
 
     mysqli_close($conn);
 
-    //header("Refresh:0");
+    header("Refresh:0");
 }
 
 include dirname(__FILE__) . '.\include\header.php';
