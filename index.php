@@ -9,7 +9,7 @@ if(!isset($_SESSION['user'])){
 }
 $user = $_SESSION['user'];
 
-$queryGetSurvey = "select ID,SurveyName, SurveyDesc from surveys where OwnedBy = (select ID from users where Email = '$user')";
+$queryGetSurvey = "select ID,SurveyName, SurveyDesc, ExpiryDate from surveys where OwnedBy = (select ID from users where Email = '$user')";
 
 require_once dirname(__FILE__)."\include\DbConnect.php";
 $db = new DbConnect();
@@ -44,7 +44,9 @@ include dirname(__FILE__).'/include/header.php';
                     <div class="col-xs-12 col-sm-6 col-md-4 col-lg-4">
                             <div class="panel panel-info">
                                 <div class="panel-heading">
-                                    <h3 class="panel-title"><?php echo $row['SurveyName']?></h3>
+                                    <h3 class="panel-title"><?php echo $row['SurveyName']?>
+                                        <small class="pull-right">Expiry Date:<?php echo $row['ExpiryDate']?></small>
+                                    </h3>
                                 </div>
                                 <div class="panel-body">
                                     <?php echo $row['SurveyDesc'];?>
