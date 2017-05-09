@@ -142,7 +142,7 @@ include dirname(__FILE__) . '.\include\header.php';
                     <div class="panel-heading clearfix">
                         <div class="btn-group pull-right">
                             <a class="btn btn-info pull-right" href="updateQuesAns.php">Update</a>
-                            <a class="btn btn-danger pull-right" href="deleteQuesAns.php?id='.$result['ID'].'">Delete</a>
+                            <a class="btn btn-danger pull-right" href="deleteQuesAns.php?id='.$result['ID'].'&surveyId='.$sID.'">Delete</a>
                         </div>
                         <h4>'.$result['Question'].'</h4>
                     </div>
