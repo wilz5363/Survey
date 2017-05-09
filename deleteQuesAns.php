@@ -23,4 +23,4 @@ echo "Deleting...";
 mysqli_query($conn, $query) or die("Smth wrong");
 mysqli_close($conn);
 
-header("Location: createForm.php");
+header("Location: createForm.php?id=".$surveyId);
