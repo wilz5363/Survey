@@ -10,7 +10,9 @@ require_once "..\include\DbConnect.php";
 $db = new DbConnect();
 $conn = $db->connect();
 
-$query = "SELECT ID,SurveyName,SurveyDesc, ExpiryDate from surveys where ExpiryDate > CURRENT_TIMESTAMP ";
+$email = $_POST['Email'];
+$query = "SELECT ID,SurveyName,SurveyDesc, ExpiryDate from surveys where ExpiryDate > CURRENT_TIMESTAMP
+and ID NOT IN (select SurveyId from user_sessions where UserId = (select ID from users where Email = '".$email."') and Completed = TRUE )";
 
 $result = mysqli_query($conn,$query);
 $response = array();
