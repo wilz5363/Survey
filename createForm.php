@@ -88,8 +88,12 @@ WHERE questions.SurveyId = '$sID'";
         $sAns = $_POST['sAns'];
 
         require_once dirname(__FILE__) . '\include\DbConnect.php';
+        require_once dirname(__FILE__) . '\include\CipherDbConnect.php.php';
         $db = new DbConnect();
         $conn = $db->connect();
+
+        $cipherDb = new CipherDbConnect();
+        $cipherConn = $cipherDb->connect();
 
         $qInsertQues = "insert into questions(Question, SurveyId) VALUE ('$sQues','$sId')";
         if (mysqli_query($conn, $qInsertQues)) {
@@ -103,10 +107,15 @@ WHERE questions.SurveyId = '$sID'";
                 if (!mysqli_query($conn, $qInsertAns)) {
                     mysqli_error($conn);
                 }else{
+                    $cipherDb = new CipherDbConnect();
+                    $cipherConn = $cipherDb->connect();
+
                     $ansId = mysqli_insert_id($conn);
                     $hash = new Math_BigInteger(generate1024bithash());
                     $qInsertCryptoTable = "insert into crypto_table(AnswerId, Answer_Hash) VALUE (".$ansId.",'".$hash."')";
-                    mysqli_query($conn, $qInsertCryptoTable);
+                    mysqli_query($cipherConn, $qInsertCryptoTable);
+
+                    mysqli_close($cipherConn);
                 }
             }
 
