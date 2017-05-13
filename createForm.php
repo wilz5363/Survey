@@ -88,7 +88,7 @@ WHERE questions.SurveyId = '$sID'";
         $sAns = $_POST['sAns'];
 
         require_once dirname(__FILE__) . '\include\DbConnect.php';
-        require_once dirname(__FILE__) . '\include\CipherDbConnect.php.php';
+        require_once dirname(__FILE__) . '\include\CipherDbConnect.php';
         $db = new DbConnect();
         $conn = $db->connect();
 
@@ -188,12 +188,14 @@ include dirname(__FILE__) . '.\include\header.php';
                             <label for="sAns">Answer</label>
                             <input type="text" class="form-control" name="sAns[]" id="sAns"
                                    placeholder="Please Enter Your Answer">
+                            <input type="text" class="form-control" name="sAns[]" id="sAns"
+                                   placeholder="Please Enter Your Answer">
                         </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-                    <button type="button" class="btn btn-info" onclick="addAnswer()">Add Answer</button>
+<!--                    <button type="button" class="btn btn-info" onclick="addAnswer()">Add Answer</button>-->
                     <button type="submit" class="btn btn-primary">Save changes</button>
                 </div>
             </form>
