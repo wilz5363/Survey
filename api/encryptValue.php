@@ -12,15 +12,15 @@ include('..\phpseclib\Math\BigInteger.php');
 
 
 
-require_once "..\include\DbConnect.php";
-$db = new DbConnect();
+require_once "..\include\CipherDbConnect.php";
+$db = new CipherDbConnect();
 $conn = $db->connect();
 
 // preparation for cryptosystem
 // random generate based on selected bit
 $g = new Math_BigInteger(generate1024bit());
 $p = new Math_BigInteger(generate1024bit());
-$c = new Math_BigInteger(generate160bit());
+$c = new Math_BigInteger(generate80bit());
 $d = new Math_BigInteger(1);
 $key = generateKey($g,$p,$c);
 
