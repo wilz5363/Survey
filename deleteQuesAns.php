@@ -8,12 +8,13 @@
  */
 session_start();
 
-$sId = $_GET['id'];
+$qId = $_GET['id'];
+$surveyId = $_GET['surveyId'];
 /*
  * the query was wrong. now correct liao
  */
 $query = "delete FROM questions 
-WHERE ID = '$sId'";
+WHERE ID =".$qId;
 
 include dirname(__FILE__) . "/include/DbConnect.php";
 $db = new DbConnect();
