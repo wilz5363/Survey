@@ -150,7 +150,7 @@ include dirname(__FILE__) . '.\include\header.php';
                     <div class="panel panel-default">
                     <div class="panel-heading clearfix">
                         <div class="btn-group pull-right">
-                            <a class="btn btn-info pull-right" href="updateQuesAns.php">Update</a>
+                            <a class="btn btn-info pull-right" data-id="'.$result['ID'].'" data-toggle="modal" href="#update-question">Update</a>
                             <a class="btn btn-danger pull-right" href="deleteQuesAns.php?id='.$result['ID'].'&surveyId='.$sID.'">Delete</a>
                         </div>
                         <h4>'.$result['Question'].'</h4>
@@ -199,6 +199,25 @@ include dirname(__FILE__) . '.\include\header.php';
                     <button type="submit" class="btn btn-primary">Save changes</button>
                 </div>
             </form>
+        </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+</div><!-- /.modal -->
+
+
+<div class="modal fade" id="modal-id">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                <h4 class="modal-title">Update Questionx`</h4>
+            </div>
+            <div class="modal-body">
+                Modal body ...
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Save changes</button>
+            </div>
         </div><!-- /.modal-content -->
     </div><!-- /.modal-dialog -->
 </div><!-- /.modal -->
