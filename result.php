@@ -1,12 +1,12 @@
 <?php
 $title = "Result";
-//session_start();
+session_start();
 
 $surveyId = $_GET['surveyId'];
 
-//if(!isset($_SESSION['user'])) {
-//    header('Location: login.php');
-//}
+if(!isset($_SESSION['user'])) {
+    header('Location: login.php');
+}
 
 require_once "include/DbConnect.php";
 require_once "include/CipherDbConnect.php";
@@ -101,7 +101,7 @@ include dirname(__FILE__).'/include/header.php';
                     $lastQuestion = $data->getQuestion();
                     ?>
                     <div class="col-md-4">
-                        <h6><?php echo $data->getQuestion(); ?></h6>
+                        <h6 class="lead"><?php echo $data->getQuestion(); ?></h6>
                         <!--this is the tag to show the chart. using canvas tag-->
                         <canvas id="myChart<?php echo $questionCount ?>" width="400" height="400"></canvas>
                     </div>
@@ -109,9 +109,43 @@ include dirname(__FILE__).'/include/header.php';
                     $questionCount++;
                 }
         } ?>
+
+    //to remove aggregator table
+    <div class="col-xs-12 col-sm-12 col-md-12 col-lg-12" style="margin-top: 40pt">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead>
+                <tr>
+                    <th>AnswerId</th>
+                    <th>Ciphter Text</th>
+                    <th>Key</th>
+                </tr>
+                </thead>
+                <tbody>
+                <?php
+                foreach ($cipherResult as $data){
+                    ?>
+                    <tr>
+                        <td><?php echo $data['AnswerId'];?></td>
+                        <td><?php echo $data['Answer_CipherText'];?></td>
+                        <td><?php echo $data['Answer_Key'];?></td>
+                    </tr>
+                    <?php
+                }
+
+                ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    //end of aggregator table
+
 </div>
 
-<script>
+
+
+
+    <script>
     var data = [];
 
     <?php
