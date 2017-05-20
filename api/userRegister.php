@@ -14,8 +14,8 @@ $conn = $db->connect();
 
 $sqlInsertUser = "insert into users(Email, Password) VALUES ('".$email."', '".$password."')";
 
-if(mysqli_query($conn. $sqlInsertUser)){
-    return "true";
+if(mysqli_query($conn, $sqlInsertUser)){
+    echo "true";
 }else{
-    return "false";
+    echo "false";
 }
