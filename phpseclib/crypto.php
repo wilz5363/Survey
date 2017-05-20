@@ -84,7 +84,7 @@ function decryption($cipherTextString,$keyString,$question_hash)
     list($quotient, $remainder) = ($cipherText->subtract($key))->divide($question_hash);
     $plainText = new Math_BigInteger($remainder);
 
-    return $plainText;
+    return $plainText->value;
 }
 
 function generateKey($g,$p,$c)
