@@ -1,105 +1,87 @@
 <?php
 $title = "Result";
-session_start();
+//session_start();
 
 $surveyId = $_GET['surveyId'];
 
-if(!isset($_SESSION['user'])) {
-    header('Location: login.php');
-}
+//if(!isset($_SESSION['user'])) {
+//    header('Location: login.php');
+//}
 
-require_once dirname(__FILE__)."/include/DbConnect.php";
-include '.\phpseclib\crypto.php';
-include '.\phpseclib\Math\BigInteger.php';
+require_once "include/DbConnect.php";
+require_once "include/CipherDbConnect.php";
+include 'phpseclib/Math/BigInteger.php';
+include 'phpseclib/crypto.php';
+include 'viewmodel/QuestionAnswerViewModel.php';
+include "viewmodel/CryptoViewModel.php";
+
 $db = new DbConnect();
 $conn = $db->connect();
 
-$sqlGetQuestionAndAnswer = "select questions.Question, answers.Answer
-                                from questions, answers 
-                                where questions.ID = answers.QuestionId and questions.SurveyId =".$surveyId;
-$qResult = mysqli_query($conn, $sqlGetQuestionAndAnswer);
-$qaArrays = array();
-$qA['Answers'] = array();
-$answers = array();
-$fQuestion = "";
-while ($result = mysqli_fetch_assoc($qResult)){
-    $nextQuestion = $result['Question'];
-    if($nextQuestion == $fQuestion){
-        array_push($qA['Answers'], $result['Answer'] );
-        array_push($qaArrays, $qA );
+$cipherDb = new CipherDbConnect();
+$cipherConn = $cipherDb->connect();
+
+$allQuestionAndAnwers = "select questions.ID as QuestionId, questions.Question, answers.ID as AnswerId, answers.Answer from questions, answers where surveyId =".$surveyId." and questions.ID = answers.QuestionId";
+$surveyResult = mysqli_query($conn, $allQuestionAndAnwers);
+$answerIds = array();
+while ($data = mysqli_fetch_assoc($surveyResult)){
+    $result = new QuestionAnswerViewModel();
+
+    $result->setQuestionId($data['QuestionId']);
+    $result->setQuestion($data['Question']);
+    $result->setAnswerId($data['AnswerId']);
+    $result->setAnswer($data['Answer']);
+
+    $answerIds[] = $result->getAnswerId();
+    $surveyTempData[]=$result;
+}
+//
+//$cipherData = mysqli_query($cipherConn)
+
+//var_dump($surveyData);
+//exit();
+
+$allCipherData = "select AnswerId, Answer_Hash, Answer_Key, Answer_CipherText from crypto_table where AnswerId in (".implode(',', $answerIds).")";
+$cipherResult = mysqli_query($cipherConn, $allCipherData);
+$cryptoData = array();
+
+while ($cipherData = mysqli_fetch_assoc($cipherResult)){
+
+    $cipherText = new Math_BigInteger($cipherData['Answer_CipherText']);
+    $cipherKey = new Math_BigInteger($cipherData['Answer_Key']);
+    $cipherHash = new Math_BigInteger($cipherData['Answer_Hash']);
+
+    $selectCount = decryption($cipherText, $cipherKey, $cipherHash);
+
+    $cryptoData[] = new CryptoViewModel($cipherData['AnswerId'], $cipherHash, $cipherKey, $cipherText, $selectCount);
+
+}
+
+$surveyData = array();
+foreach ($surveyTempData as $survey){
+    foreach ($cryptoData as $crypto){
+        if($survey->getAnswerId() == $crypto->getAnswerId()){
+            $survey->setSelectionCount($crypto->getCount());
+            $surveyData[] = $survey;
+        }
+    }
+}
+$answerDatas = array();
+$tempData = array();
+$lastQuestion = "";
+foreach ($surveyData as $tempAnswerData){
+    if($lastQuestion === $tempAnswerData->getQuestion()){
+        $tempData['Answer2'] = $tempAnswerData->getAnswer();
+        $tempData['Count2'] = $tempAnswerData->getSelectionCount();
+
+        array_push($answerDatas, $tempData);
     }else{
-        $fQuestion = $nextQuestion;
-        unset($answers);
-        $qA['Question'] = $fQuestion;
-        array_push($qA['Answers'], $result['Answer']);
+        $tempData = array();
+        $lastQuestion = $tempAnswerData->getQuestion();
+        $tempData['Answer1'] = $tempAnswerData->getAnswer();
+        $tempData['Count1'] = $tempAnswerData->getSelectionCount();
     }
 }
-$sqlGetAggregateData = "select QuestionId, FirstSelection, FirstKey, SecondSelection, SecondKey from aggregate_table where QuestionId in (select ID FROM  questions where SurveyId = ".$surveyId.") order by QuestionId";
-$aggregateDataResult = mysqli_query($conn, $sqlGetAggregateData);
-$sqlGetAnswerHash = "select AnswerId, Answer_Hash from crypto_table where AnswerId in (SELECT ID from answers where QuestionId in (SELECT ID from questions where SurveyId = ".$surveyId."))";
-$AnswerHashResult = mysqli_query($conn,$sqlGetAnswerHash);
-$AnswerHashes = array();
-$AnswerHashesArray = array();
-$hashRowNum = 0;
-while($row = mysqli_fetch_assoc($AnswerHashResult)) {
-    $hash = $row['Answer_Hash'];
-
-    if($hashRowNum %2 == 0){
-        array_push($AnswerHashes, $hash);
-        array_push($AnswerHashesArray, $AnswerHashes);
-    }else{
-        array_push($AnswerHashes, $hash);
-    }
-    $hashRowNum++;
-}
-$aQuestion = "";
-$firstRowData = 0;
-$aCipherText = null;
-$aKey = null;
-$bCipherText = null;
-$bKey = null;
-$aggregateDataArray = array();
-$aggregateData = array();
-$aggregateKey = array();
-while ($row = mysqli_fetch_assoc($aggregateDataResult)){
-   $nextRow = $row['QuestionId'];
-   if($nextRow == $aQuestion){
-       
-       $nACipherText = new Math_BigInteger($row['FirstSelection']);
-       $nAKey = new Math_BigInteger($row['FirstKey']);
-
-       $nBCipherText = new Math_BigInteger($row['SecondSelection']);
-       $nBKey = new Math_BigInteger($row['SecondKey']);
-
-       $aKey = $aKey->add($nAKey);
-       $aCipherText = $aCipherText->add($nACipherText);
-
-       $bKey = $bKey->add($nBKey);
-       $bCipherText = $bCipherText->add($nBCipherText);
-   }else{
-       if($firstRowData != 0 ){
-           array_push($aggregateKey, $aKey);
-           var_dump($aKey);
-           array_push($aggregateKey, $bKey);
-           var_dump($bKey);
-           array_push($aggregateData, $aCipherText);
-           array_push($aggregateData, $bCipherText);
-       }
-        $aCipherText = new Math_BigInteger($row['FirstSelection']);
-        $aKey = new Math_BigInteger($row['FirstKey']);
-        var_dump($aKey->value);
-        $bCipherText = new Math_BigInteger($row['SecondSelection']);
-        $bKey = new Math_BigInteger($row['SecondKey']);
-        $aQuestion = $row['QuestionId'];
-    }
-    $firstRowData++;
-}
-
-var_dump($aggregateKey);
-var_dump($aggregateData);
-var_dump($AnswerHashesArray);
-
-exit();
 
 include dirname(__FILE__).'/include/header.php';
 ?>
@@ -111,37 +93,43 @@ include dirname(__FILE__).'/include/header.php';
 <div class="row">
     <?php
         $questionCount = 0;
-        foreach ($qaArrays as $question){?>
-            <div class="col-md-4">
-                <h6><?php echo $question['Question'];?></h6>
-                <!--this is the tag to show the chart. using canvas tag-->
-                <canvas id="myChart<?php echo $questionCount?>" width="400" height="400"></canvas>
-            </div>
-        <?php
-        $questionCount++;} ?>
+        $lastQuestion = "";
+        foreach ($surveyData as $data){
+                if($lastQuestion === $data->getQuestion()){
+                    continue;
+                }else {
+                    $lastQuestion = $data->getQuestion();
+                    ?>
+                    <div class="col-md-4">
+                        <h6><?php echo $data->getQuestion(); ?></h6>
+                        <!--this is the tag to show the chart. using canvas tag-->
+                        <canvas id="myChart<?php echo $questionCount ?>" width="400" height="400"></canvas>
+                    </div>
+                    <?php
+                    $questionCount++;
+                }
+        } ?>
 </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.5.0/Chart.min.js"></script>
 
 <script>
     var data = [];
 
     <?php
             $dataCount = 0;
-        foreach ($qaArrays as $qa){?>
+        foreach ($answerDatas as $data){?>
 
      data[<?php echo $dataCount?>] = {
         //This one most prob will use for asnwer
         labels: [
-            "<?php echo $qa['Answers'][0];?>",
-            "<?php echo $qa['Answers'][1];?>"
+            "<?php echo $data['Answer1'];?>",
+            "<?php echo $data['Answer2'];?>"
         ],
         datasets: [
             {
                 //data for how many ppl select this answer
                 data: [
-                        1,
-                        1
+                        <?php echo $data['Count1'] == "" ? 0 : $data['Count1'];?>,
+                        <?php echo $data['Count2'] == "" ? 0 : $data['Count2'];?>
                     ],
                 //colour to differentiate answer
                 backgroundColor: [
@@ -163,14 +151,13 @@ include dirname(__FILE__).'/include/header.php';
 
     // For a pie chart
     for($index = 0; $index < $dataCount; $index++){
-        echo "var ctx = document.getElementById('myChart".$index."');";
+        echo "var ctx = document.getElementById('myChart".$index."'); \r\n";
         echo "var myPieChart".($index+1)." = new Chart(ctx,{".
                 "type: 'pie',".//if wanna use donut, changepie to doughnut
-                "data: data[".$index."]})";
+                "data: data[".$index."]}); \r\n";
     }
 
 ?>
-
 </script>
 
 <?php
